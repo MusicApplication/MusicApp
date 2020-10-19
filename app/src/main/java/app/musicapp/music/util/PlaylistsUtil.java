@@ -74,8 +74,7 @@ public class PlaylistsUtil {
                             EXTERNAL_CONTENT_URI,
                             values);
                     if (uri != null) {
-                        Toast.makeText(context, context.getResources().getString(
-                                R.string.created_playlist_x, name), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, "New Playlist Created", Toast.LENGTH_SHORT).show();
                         id = Integer.parseInt(uri.getLastPathSegment());
                     }
                 } else {
