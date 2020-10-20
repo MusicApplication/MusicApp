@@ -1,5 +1,8 @@
 package app.musicapp.music.service;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.appwidget.AppWidgetManager;
@@ -34,6 +37,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
 
 import com.bumptech.glide.BitmapRequestBuilder;
 import com.bumptech.glide.Glide;
@@ -64,6 +68,7 @@ import app.musicapp.music.service.notification.PlayingNotification;
 import app.musicapp.music.service.notification.PlayingNotificationImpl;
 import app.musicapp.music.service.notification.PlayingNotificationImpl24;
 import app.musicapp.music.service.playback.Playback;
+import app.musicapp.music.ui.activities.MainActivity;
 import app.musicapp.music.util.MusicUtil;
 import app.musicapp.music.util.PreferenceUtil;
 import app.musicapp.music.util.Util;
@@ -250,6 +255,7 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
         playback.setCallbacks(this);
 
         setupMediaSession();
+        setupFirstNotification();
 
         // queue saving needs to run on a separate thread so that it doesn't block the playback handler events
         queueSaveHandlerThread = new HandlerThread("QueueSaveHandler", Process.THREAD_PRIORITY_BACKGROUND);
@@ -344,6 +350,35 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
                 | MediaSession.FLAG_HANDLES_MEDIA_BUTTONS);
 
         mediaSession.setMediaButtonReceiver(mediaButtonReceiverPendingIntent);
+    }
+
+    public void setupFirstNotification () {
+        if (Build.VERSION.SDK_INT >= 26) {
+            String CHANNEL_ID = "my_channel_01";
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
+                    "Channel human readable title",
+                    NotificationManager.IMPORTANCE_DEFAULT);
+
+            channel.setSound(null,null);
+            channel.enableLights(false);
+            channel.enableVibration(false);
+
+            ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
+
+            Intent notificationIntent = new Intent(this, MainActivity.class);
+            PendingIntent pendingIntent = PendingIntent.getActivity(this,
+                    0, notificationIntent, 0);
+
+            Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_notification)
+                    .setContentTitle("You are using Music App")
+                    .setContentText("Music you play appears here")
+                    .setContentIntent(pendingIntent)
+                    .build();
+
+            startForeground(1, notification);
+            stopForeground(true);
+        }
     }
 
     @Override
@@ -873,32 +908,34 @@ public class MusicService extends Service implements SharedPreferences.OnSharedP
     }
 
     public void play() {
-        synchronized (this) {
-            if (requestFocus()) {
-                if (!playback.isPlaying()) {
-                    if (!playback.isInitialized()) {
-                        playSongAt(getPosition());
-                    } else {
-                        playback.start();
-                        if (!becomingNoisyReceiverRegistered) {
-                            registerReceiver(becomingNoisyReceiver, becomingNoisyReceiverIntentFilter);
-                            becomingNoisyReceiverRegistered = true;
-                        }
-                        if (notHandledMetaChangedForCurrentTrack) {
-                            handleChangeInternal(META_CHANGED);
-                            notHandledMetaChangedForCurrentTrack = false;
-                        }
-                        notifyChange(PLAY_STATE_CHANGED);
+        new Thread (() -> {
+            synchronized (this) {
+                if (requestFocus()) {
+                    if (!playback.isPlaying()) {
+                        if (!playback.isInitialized()) {
+                            playSongAt(getPosition());
+                        } else {
+                            playback.start();
+                            if (!becomingNoisyReceiverRegistered) {
+                                registerReceiver(becomingNoisyReceiver, becomingNoisyReceiverIntentFilter);
+                                becomingNoisyReceiverRegistered = true;
+                            }
+                            if (notHandledMetaChangedForCurrentTrack) {
+                                handleChangeInternal(META_CHANGED);
+                                notHandledMetaChangedForCurrentTrack = false;
+                            }
+                            notifyChange(PLAY_STATE_CHANGED);
 
-                        // fixes a bug where the volume would stay ducked because the AudioManager.AUDIOFOCUS_GAIN event is not sent
-                        playerHandler.removeMessages(DUCK);
-                        playerHandler.sendEmptyMessage(UNDUCK);
+                            // fixes a bug where the volume would stay ducked because the AudioManager.AUDIOFOCUS_GAIN event is not sent
+                            playerHandler.removeMessages(DUCK);
+                            playerHandler.sendEmptyMessage(UNDUCK);
+                        }
                     }
+                } else {
+                    Toast.makeText(this, getResources().getString(R.string.audio_focus_denied), Toast.LENGTH_SHORT).show();
                 }
-            } else {
-                Toast.makeText(this, getResources().getString(R.string.audio_focus_denied), Toast.LENGTH_SHORT).show();
             }
-        }
+        }).start();
     }
 
     public void playSongs(List<Song> songs, int shuffleMode) {

@@ -93,17 +93,10 @@ public class SongTagEditorActivity extends AbsTagEditorActivity implements TextW
 
     @Override
     protected void loadCurrentImage() {
-
-    }
-
-    @Override
-    protected void getImageFromLastFM() {
-
     }
 
     @Override
     protected void deleteImage() {
-
     }
 
     @Override

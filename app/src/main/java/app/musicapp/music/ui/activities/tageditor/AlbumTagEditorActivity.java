@@ -8,7 +8,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
-import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -33,17 +32,11 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import app.musicapp.music.glide.palette.BitmapPaletteTranscoder;
 import app.musicapp.music.glide.palette.BitmapPaletteWrapper;
-import app.musicapp.music.lastfm.rest.LastFMRestClient;
-import app.musicapp.music.lastfm.rest.model.LastFmAlbum;
 import app.musicapp.music.loader.AlbumLoader;
 import app.musicapp.music.model.Song;
 import app.musicapp.music.util.ImageUtil;
-import app.musicapp.music.util.LastFMUtil;
 import app.musicapp.music.util.Music_AppColorUtil;
 import app.musicapp.music.R;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 /*
  * @author Karim Abou Zeid (kabouzeid)
@@ -77,14 +70,11 @@ public class AlbumTagEditorActivity extends AbsTagEditorActivity implements Text
 
     private Bitmap albumArtBitmap;
     private boolean deleteAlbumArt;
-    private LastFMRestClient lastFMRestClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ButterKnife.bind(this);
-
-        lastFMRestClient = new LastFMRestClient(this);
 
         setUpViews();
     }
@@ -110,62 +100,6 @@ public class AlbumTagEditorActivity extends AbsTagEditorActivity implements Text
         Bitmap bitmap = getAlbumArt();
         setImageBitmap(bitmap, Music_AppColorUtil.getColor(Music_AppColorUtil.generatePalette(bitmap), ATHUtil.resolveColor(this, R.attr.defaultFooterColor)));
         deleteAlbumArt = false;
-    }
-
-    @Override
-    protected void getImageFromLastFM() {
-        String albumTitleStr = albumTitle.getText().toString();
-        String albumArtistNameStr = albumArtist.getText().toString();
-        if (albumArtistNameStr.trim().equals("") || albumTitleStr.trim().equals("")) {
-            Toast.makeText(this, getResources().getString(R.string.album_or_artist_empty), Toast.LENGTH_SHORT).show();
-            return;
-        }
-        lastFMRestClient.getApiService().getAlbumInfo(albumTitleStr, albumArtistNameStr, null).enqueue(new Callback<LastFmAlbum>() {
-            @Override
-            public void onResponse(Call<LastFmAlbum> call, Response<LastFmAlbum> response) {
-                LastFmAlbum lastFmAlbum = response.body();
-                if (lastFmAlbum.getAlbum() != null) {
-                    String url = LastFMUtil.getLargestAlbumImageUrl(lastFmAlbum.getAlbum().getImage());
-                    if (!TextUtils.isEmpty(url) && url.trim().length() > 0) {
-                        Glide.with(AlbumTagEditorActivity.this)
-                                .load(url)
-                                .asBitmap()
-                                .transcode(new BitmapPaletteTranscoder(AlbumTagEditorActivity.this), BitmapPaletteWrapper.class)
-                                .diskCacheStrategy(DiskCacheStrategy.SOURCE)
-                                .error(R.drawable.default_album_art)
-                                .into(new SimpleTarget<BitmapPaletteWrapper>() {
-                                    @Override
-                                    public void onLoadFailed(Exception e, Drawable errorDrawable) {
-                                        super.onLoadFailed(e, errorDrawable);
-                                        e.printStackTrace();
-                                        Toast.makeText(AlbumTagEditorActivity.this, e.toString(), Toast.LENGTH_LONG).show();
-                                    }
-
-                                    @Override
-                                    public void onResourceReady(BitmapPaletteWrapper resource, GlideAnimation<? super BitmapPaletteWrapper> glideAnimation) {
-                                        albumArtBitmap = ImageUtil.resizeBitmap(resource.getBitmap(), 2048);
-                                        setImageBitmap(albumArtBitmap, Music_AppColorUtil.getColor(resource.getPalette(), ATHUtil.resolveColor(AlbumTagEditorActivity.this, R.attr.defaultFooterColor)));
-                                        deleteAlbumArt = false;
-                                        dataChanged();
-                                        setResult(Activity.RESULT_OK);
-                                    }
-                                });
-                        return;
-                    }
-                }
-                toastLoadingFailed();
-            }
-
-            @Override
-            public void onFailure(Call<LastFmAlbum> call, Throwable t) {
-                toastLoadingFailed();
-            }
-
-            private void toastLoadingFailed() {
-                Toast.makeText(AlbumTagEditorActivity.this,
-                        R.string.could_not_download_album_cover, Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
     @Override

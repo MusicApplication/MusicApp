@@ -139,7 +139,7 @@ public class AboutActivity extends AbsBaseActivity implements View.OnClickListen
         } else if (v == share_this_app) {
             Intent sharingIntent = new Intent(Intent.ACTION_SEND);
             sharingIntent.setType("text/plain");
-            String shareBody = "Enjoy listening music with Music App, Get it form Google Play - https://play.google.com/store/apps/details?id=app.musicapp";
+            String shareBody = "Enjoy listening Music with Music App, Get it form Google Play - https://play.google.com/store/apps/details?id=app.musicapp.music";
             sharingIntent.putExtra(Intent.EXTRA_SUBJECT, "Music App");
             sharingIntent.putExtra(Intent.EXTRA_TEXT, shareBody);
             startActivity(Intent.createChooser(sharingIntent, "Share via"));

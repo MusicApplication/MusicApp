@@ -83,7 +83,7 @@ public class MainActivity extends AbsSlidingMusicPanelActivity {
     private static final int LIBRARY = 0;
     private static final int FOLDERS = 1;
     public static MusicService musicService;
-    public int MY_REQUEST_CODE = 95284163;
+    public int MY_REQUEST_CODE = 420;
     public AppUpdateManager appUpdateManager;
     @BindView(R.id.navigation_view)
     NavigationView navigationView;

@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
-import android.text.Html;
 import android.text.Spanned;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -31,7 +30,6 @@ import com.kabouzeid.appthemehelper.util.ColorUtil;
 import com.kabouzeid.appthemehelper.util.MaterialValueHelper;
 
 import java.util.List;
-import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -45,8 +43,6 @@ import app.musicapp.music.helper.MusicPlayerRemote;
 import app.musicapp.music.interfaces.CabHolder;
 import app.musicapp.music.interfaces.LoaderIds;
 import app.musicapp.music.interfaces.PaletteColorHolder;
-import app.musicapp.music.lastfm.rest.LastFMRestClient;
-import app.musicapp.music.lastfm.rest.model.LastFmArtist;
 import app.musicapp.music.loader.ArtistLoader;
 import app.musicapp.music.misc.SimpleObservableScrollViewCallbacks;
 import app.musicapp.music.misc.WrappedAsyncTaskLoader;
@@ -59,9 +55,6 @@ import app.musicapp.music.util.Music_AppColorUtil;
 import app.musicapp.music.util.NavigationUtil;
 import app.musicapp.music.util.PreferenceUtil;
 import app.musicapp.music.R;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 /**
  * Be careful when changing things in this Activity!
@@ -142,7 +135,6 @@ public class ArtistDetailActivity extends AbsSlidingMusicPanelActivity implement
     private MaterialDialog biographyDialog;
     private HorizontalAlbumAdapter albumAdapter;
     private ArtistSongAdapter songAdapter;
-    private LastFMRestClient lastFMRestClient;
     private boolean usePalette;
 
     @Override
@@ -151,7 +143,6 @@ public class ArtistDetailActivity extends AbsSlidingMusicPanelActivity implement
         setDrawUnderStatusbar();
         ButterKnife.bind(this);
 
-        lastFMRestClient = new LastFMRestClient(this);
         usePalette = PreferenceUtil.getInstance(this).albumArtistColoredFooters();
 
         initViews();
@@ -219,50 +210,6 @@ public class ArtistDetailActivity extends AbsSlidingMusicPanelActivity implement
 
     private void reload() {
         getSupportLoaderManager().restartLoader(LOADER_ID, getIntent().getExtras(), this);
-    }
-
-    private void loadBiography() {
-        loadBiography(Locale.getDefault().getLanguage());
-    }
-
-    private void loadBiography(@Nullable final String lang) {
-        biography = null;
-
-        lastFMRestClient.getApiService()
-                .getArtistInfo(getArtist().getName(), lang, null)
-                .enqueue(new Callback<LastFmArtist>() {
-                    @Override
-                    public void onResponse(@NonNull Call<LastFmArtist> call, @NonNull Response<LastFmArtist> response) {
-                        final LastFmArtist lastFmArtist = response.body();
-                        if (lastFmArtist != null && lastFmArtist.getArtist() != null) {
-                            final String bioContent = lastFmArtist.getArtist().getBio().getContent();
-                            if (bioContent != null && !bioContent.trim().isEmpty()) {
-                                biography = Html.fromHtml(bioContent);
-                            }
-                        }
-
-                        // If the "lang" parameter is set and no biography is given, retry with default language
-                        if (biography == null && lang != null) {
-                            loadBiography(null);
-                            return;
-                        }
-
-                        if (!PreferenceUtil.isAllowedToDownloadMetadata(ArtistDetailActivity.this)) {
-                            if (biography != null) {
-                                biographyDialog.setContent(biography);
-                            } else {
-                                biographyDialog.dismiss();
-                                Toast.makeText(ArtistDetailActivity.this, getResources().getString(R.string.biography_unavailable), Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(@NonNull Call<LastFmArtist> call, @NonNull Throwable t) {
-                        t.printStackTrace();
-                        biography = null;
-                    }
-                });
     }
 
     private void loadArtistImage() {
@@ -360,25 +307,6 @@ public class ArtistDetailActivity extends AbsSlidingMusicPanelActivity implement
             case android.R.id.home:
                 super.onBackPressed();
                 return true;
-            case R.id.action_biography:
-                if (biographyDialog == null) {
-                    biographyDialog = new MaterialDialog.Builder(this)
-                            .title(artist.getName())
-                            .positiveText(android.R.string.ok)
-                            .build();
-                }
-                if (PreferenceUtil.isAllowedToDownloadMetadata(ArtistDetailActivity.this)) { // wiki should've been already downloaded
-                    if (biography != null) {
-                        biographyDialog.setContent(biography);
-                        biographyDialog.show();
-                    } else {
-                        Toast.makeText(ArtistDetailActivity.this, getResources().getString(R.string.biography_unavailable), Toast.LENGTH_SHORT).show();
-                    }
-                } else { // force download
-                    biographyDialog.show();
-                    loadBiography();
-                }
-                return true;
             case R.id.action_set_artist_image:
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                 intent.setType("image/*");
@@ -452,10 +380,6 @@ public class ArtistDetailActivity extends AbsSlidingMusicPanelActivity implement
     private void setArtist(Artist artist) {
         this.artist = artist;
         loadArtistImage();
-
-        if (PreferenceUtil.isAllowedToDownloadMetadata(this)) {
-            loadBiography();
-        }
 
         getSupportActionBar().setTitle(artist.getName());
         songCountTextView.setText(MusicUtil.getSongCountString(this, artist.getSongCount()));
