@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="player.musicplayer.music"
+    android:installLocation="auto">
+
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission
+        android:name="android.permission.USE_FINGERPRINT"
+        tools:node="remove" />
+
+    <uses-feature
+        android:name="android.hardware.faketouch"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.screen.portrait"
+        android:required="false" />
+
+    <application
+        android:name=".MyMusicApp"
+        android:allowBackup="true"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_launcher_name"
+        android:requestLegacyExternalStorage="true"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:theme="@style/AppTheme">
+        <activity
+            android:name=".activities.SplashActivity"
+            android:theme="@style/SplashTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".activities.MainActivity"
+            android:launchMode="singleTask">
+            <meta-data
+                android:name="android.app.default_searchable"
+                android:resource="@xml/searchable" />
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEARCH" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".activities.WidgetConfigureActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/MyWidgetConfigTheme">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="com.musicplayer.commons.activities.AboutActivity"
+            android:label="@string/about"
+            android:parentActivityName=".activities.MainActivity" />
+        <activity
+            android:name=".AboutAppActivity"
+            android:label="@string/about"
+            android:parentActivityName=".activities.MainActivity" />
+        <activity
+            android:name=".ChangelogAppActivity"
+            android:label="@string/changelog"
+            android:parentActivityName=".activities.MainActivity" />
+        <activity
+            android:name=".LicensesAppActivity"
+            android:label="@string/licenses"
+            android:parentActivityName=".activities.MainActivity" />
+        <activity
+            android:name="com.musicplayer.commons.activities.CustomizationActivity"
+            android:label="@string/customize_colors"
+            android:parentActivityName=".activities.SettingsActivity" />
+        <activity
+            android:name="com.musicplayer.commons.activities.LicenseActivity"
+            android:label="@string/third_party_licences"
+            android:parentActivityName="com.musicplayer.commons.activities.AboutActivity" />
+        <activity
+            android:name="com.musicplayer.commons.activities.FAQActivity"
+            android:label="@string/frequently_asked_questions"
+            android:parentActivityName="com.musicplayer.commons.activities.AboutActivity" />
+        <activity
+            android:name=".activities.SettingsActivity"
+            android:label="@string/settings"
+            android:parentActivityName=".activities.MainActivity" />
+        <activity
+            android:name=".activities.EqualizerActivity"
+            android:label="@string/equalizer"
+            android:parentActivityName=".activities.MainActivity" />
+        <activity
+            android:name=".activities.AlbumsActivity"
+            android:label="@string/artist"
+            android:parentActivityName=".activities.MainActivity" />
+        <activity
+            android:name=".activities.TracksActivity"
+            android:label="@string/artist"
+            android:parentActivityName=".activities.AlbumsActivity" />
+        <activity
+            android:name=".activities.TrackActivity"
+            android:parentActivityName=".activities.MainActivity"
+            android:theme="@style/TranslucentTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:scheme="content" />
+                <data android:mimeType="audio/*" />
+                <data android:mimeType="application/ogg" />
+                <data android:mimeType="application/x-ogg" />
+                <data android:mimeType="application/itunes" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:scheme="file" />
+                <data android:mimeType="audio/*" />
+                <data android:mimeType="application/ogg" />
+                <data android:mimeType="application/x-ogg" />
+                <data android:mimeType="application/itunes" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".activities.QueueActivity"
+            android:label="@string/track_queue"
+            android:parentActivityName=".activities.TrackActivity" />
+
+        <service
+            android:name=".services.MusicService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="player.musicplayer.music.action.INIT" />
+                <action android:name="player.musicplayer.music.action.INIT_PATH" />
+                <action android:name="player.musicplayer.music.action.INIT_QUEUE" />
+                <action android:name="player.musicplayer.music.action.FINISH" />
+                <action android:name="player.musicplayer.music.action.FINISH_IF_NOT_PLAYING" />
+                <action android:name="player.musicplayer.music.action.PREVIOUS" />
+                <action android:name="player.musicplayer.music.action.PAUSE" />
+                <action android:name="player.musicplayer.music.action.PLAYPAUSE" />
+                <action android:name="player.musicplayer.music.action.NEXT" />
+                <action android:name="player.musicplayer.music.action.EDIT" />
+                <action android:name="player.musicplayer.music.action.PLAY_TRACK" />
+                <action android:name="player.musicplayer.music.action.REFRESH_LIST" />
+                <action android:name="player.musicplayer.music.action.UPDATE_NEXT_TRACK" />
+                <action android:name="player.musicplayer.music.action.SET_PROGRESS" />
+                <action android:name="player.musicplayer.music.action.SKIP_BACKWARD" />
+                <action android:name="player.musicplayer.music.action.SKIP_FORWARD" />
+                <action android:name="player.musicplayer.music.action.SET_PLAYBACK_SPEED" />
+                <action android:name="player.musicplayer.music.action.BROADCAST_STATUS" />
+            </intent-filter>
+        </service>
+
+        <receiver
+            android:name=".helpers.MyWidgetProvider">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info" />
+        </receiver>
+        <receiver
+            android:name=".receivers.RemoteControlReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter android:priority="999">
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".receivers.HeadsetPlugReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.ACTION_HEADSET_PLUG" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".receivers.ControlActionsListener" />
+        <receiver
+            android:name=".receivers.NotificationDismissedReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="player.musicplayer.music.action.NOTIFICATION_DISMISSED" />
+            </intent-filter>
+        </receiver>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
+
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="app-id" />
+    </application>
+
+</manifest>
